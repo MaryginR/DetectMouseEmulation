@@ -1,12 +1,8 @@
-﻿#include <iostream>
-#include <vector>
-#include <chrono>
-#include <future>
-#include <Windows.h>
+﻿#include "DetectMouseEmulationHeader.h"
 
 std::chrono::steady_clock::time_point LastMouseMessage;
 
-LRESULT CALLBACK targetWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK targetWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -42,7 +38,7 @@ LRESULT CALLBACK targetWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-bool CheckCursor()
+static bool CheckCursor()
 {
     POINT CurrentCursorPos, LastCursorPos;
 
