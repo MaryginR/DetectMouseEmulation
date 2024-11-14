@@ -1,6 +1,7 @@
 ﻿#include "DetectMouseEmulationHeader.h"
 
 std::chrono::steady_clock::time_point LastMouseMessage;
+bool EmulatingDetected = false;
 
 static LRESULT CALLBACK targetWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -21,10 +22,7 @@ static LRESULT CALLBACK targetWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
                 //hDevice == 0x0000000000000000 означает что девайс, с которого получен raw пакет не определен
                 if (raw->header.hDevice == 0x0000000000000000)
                 {
-                    std::cout << "mouse emulating detected!" << std::endl;
-                    std::cout << "synthetic mouse move "
-                        << raw->data.mouse.lLastX << ","
-                        << raw->data.mouse.lLastY << std::endl;
+                    EmulatingDetected = true;
                 }
 
                 LastMouseMessage = std::chrono::steady_clock::now();
@@ -59,8 +57,7 @@ static bool CheckCursor()
 
             if (elapsedTicks.count() > 200)
             {
-                std::cout << "mouse emulating detected!" << std::endl;
-                //return true;
+                EmulatingDetected = true;
             }
 
             LastCursorPos = CurrentCursorPos;
@@ -70,7 +67,7 @@ static bool CheckCursor()
     }
 }
 
-int main()
+static void ScanMouseMoves()
 {
     HINSTANCE hInstance = GetModuleHandle(NULL);
 
@@ -80,11 +77,11 @@ int main()
     wc.lpszClassName = TEXT("MyRawInputWnd");
 
     if (!RegisterClass(&wc))
-        return -1;
+        throw "failed to register WNDCLASS!";
 
     HWND targetWindow = CreateWindowEx(0, wc.lpszClassName, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
     if (!targetWindow)
-        return -1;
+        throw "failed to create target window for scanning!";
 
     //register the monitoring device
     RAWINPUTDEVICE rid = {};
@@ -94,7 +91,7 @@ int main()
     rid.hwndTarget = targetWindow;
 
     if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
-        return -1;
+        throw "failed to register raw input device!";
 
     MSG msg;
 
@@ -109,6 +106,4 @@ int main()
     }
 
     DestroyWindow(targetWindow);
-
-    return 0;
 }
